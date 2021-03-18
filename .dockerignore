@@ -72,3 +72,5 @@ fastlane/test_output
 ## Node
 node_modules/
 *.lock
+
+Sources/Server/Public/*/
