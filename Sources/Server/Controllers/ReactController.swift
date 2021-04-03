@@ -36,13 +36,13 @@ public class ReactController: RouteCollection {
     public func boot(routes: RoutesBuilder) throws {
         
         routes.get { req -> Response in
-            let response = Response(status: .ok, body: .init(string: self.html))
+            let response = try Response(status: .ok, body: .init(string: self.html(req.url.path)))
             response.headers.contentType = .html
             return response
         }
         
         routes.get("**") { req -> Response in
-            let response = Response(status: .ok, body: .init(string: self.html))
+            let response = try Response(status: .ok, body: .init(string: self.html(req.url.path)))
             response.headers.contentType = .html
             return response
         }
@@ -51,7 +51,35 @@ public class ReactController: RouteCollection {
 
 extension ReactController {
     
-    private var html: String {
+    public struct Error: Swift.Error {
+        
+        public var message: String?
+    }
+    
+    private func html(_ path: String) throws -> String {
+        
+        let publicDirectory = Bundle.module.resourceURL!.appendingPathComponent("Public")
+        
+        let url = publicDirectory.appendingPathComponent("js").appendingPathComponent("server.js")
+        
+        let context = JSContext()
+        context["self"] = context.global
+        
+        try context.evaluateScript(String(contentsOf: url))
+        
+        if let exception = context.exception {
+            throw Error(message: exception.stringValue)
+        }
+        
+        let result = context.global.invokeMethod("render", withArguments: [JSObject(string: path, in: context)])
+        
+        if let exception = context.exception {
+            throw Error(message: exception.stringValue)
+        }
+        
+        let html = result["html"].stringValue ?? ""
+        let css = result["css"].stringValue ?? ""
+        
         return """
         <!doctype html>
         <html>
@@ -71,12 +99,10 @@ extension ReactController {
                         height: 100%;
                     }
                 </style>
+                \(css)
             </head>
             <body>
-                <noscript>
-                    You need to enable JavaScript to view this website.
-                </noscript>
-                <div id="\(root)"></div>
+                <div id="\(root)">\(html)</div>
                 <script src="\(bundle)"></script>
             </body>
         </html>

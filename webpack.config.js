@@ -83,6 +83,7 @@ module.exports = [
 	Object.assign({}, webpackConfiguration, {
 		entry: { 
 			main: './Sources/Server/js/main.js',
+			server: './Sources/Server/js/server.js',
 		},
 		output: {
 			path: path.join(__dirname, 'Sources/Server/Public'),
