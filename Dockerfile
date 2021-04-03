@@ -7,6 +7,10 @@ RUN npx webpack --mode production
 
 FROM swift AS builder
 
+RUN apt-get update \
+ && apt-get install -y libjavascriptcoregtk-4.0-dev \
+ && rm -r /var/lib/apt/lists/*
+
 WORKDIR /worker
 COPY --from=bundler /worker .
 
@@ -22,6 +26,10 @@ RUN swift build -c release \
  && rm -f description.json
 
 FROM swift:slim
+
+RUN apt-get update \
+ && apt-get install -y libjavascriptcoregtk-4.0-dev \
+ && rm -r /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY --from=builder /worker/app .
