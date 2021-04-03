@@ -28,9 +28,18 @@ public class ReactController: RouteCollection {
     public var root: String
     public var bundle: String
     
-    public init(bundle: String, root: String = "root") {
+    let context: JSContext = JSContext()
+    
+    public init(bundle: String, serverScript: URL, root: String = "root") throws {
         self.bundle = bundle
         self.root = root
+        
+        self.context["self"] = self.context.global
+        try self.context.evaluateScript(String(contentsOf: serverScript))
+        
+        if let exception = self.context.exception {
+            throw Error(message: exception.stringValue)
+        }
     }
     
     public func boot(routes: RoutesBuilder) throws {
@@ -57,19 +66,6 @@ extension ReactController {
     }
     
     private func html(_ path: String) throws -> String {
-        
-        let publicDirectory = Bundle.module.resourceURL!.appendingPathComponent("Public")
-        
-        let url = publicDirectory.appendingPathComponent("js").appendingPathComponent("server.js")
-        
-        let context = JSContext()
-        context["self"] = context.global
-        
-        try context.evaluateScript(String(contentsOf: url))
-        
-        if let exception = context.exception {
-            throw Error(message: exception.stringValue)
-        }
         
         let result = context.global.invokeMethod("render", withArguments: [JSObject(string: path, in: context)])
         
