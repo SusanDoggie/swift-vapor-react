@@ -36,7 +36,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
-        .package(url: "https://github.com/SusanDoggie/SwiftJS.git", from: "1.2.0"),
+        .package(url: "https://github.com/SusanDoggie/SwiftJS.git", .branch("main")),
     ],
     targets: [
         .target(
