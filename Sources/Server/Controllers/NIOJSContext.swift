@@ -1,5 +1,5 @@
 //
-//  routes.swift
+//  NIOJSContext.swift
 //
 //  The MIT License
 //  Copyright (c) 2015 - 2021 Susan Cheng. All rights reserved.
@@ -23,12 +23,42 @@
 //  THE SOFTWARE.
 //
 
-func routes(_ app: Application) throws {
+public class NIOJSContext {
     
-    let publicDirectory = Bundle.module.resourceURL!.appendingPathComponent("Public")
-    let serverScript = publicDirectory.appendingPathComponent("js").appendingPathComponent("server.js")
+    private let context: JSContext
     
-    try app.register(collection: ReactController(bundle: "/js/main.js",
-                                                 serverScript: serverScript,
-                                                 eventLoop: app.eventLoopGroup.next()))
+    public let threadPool: NIOThreadPool = NIOThreadPool(numberOfThreads: 1)
+    
+    public init() {
+        self.context = JSContext()
+    }
+    
+    public init(context: JSContext) {
+        self.context = context
+    }
+}
+
+extension NIOJSContext {
+    
+    public func start() {
+        self.threadPool.start()
+    }
+    
+    public func shutdownGracefully(_ callback: @escaping (Error?) -> Void) {
+        self.threadPool.shutdownGracefully(callback)
+    }
+    
+    public func syncShutdownGracefully() throws {
+        try self.threadPool.syncShutdownGracefully()
+    }
+}
+
+extension NIOJSContext {
+    
+    public func run<T>(eventLoop: EventLoop, callback: @escaping (JSContext) throws -> T) -> EventLoopFuture<T> {
+        
+        return self.threadPool.runIfActive(eventLoop: eventLoop) {
+            try callback(self.context)
+        }
+    }
 }

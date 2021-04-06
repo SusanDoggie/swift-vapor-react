@@ -28,32 +28,51 @@ public class ReactController: RouteCollection {
     public var root: String
     public var bundle: String
     
-    let context: JSContext = JSContext()
+    let context: NIOJSContext
     
-    public init(bundle: String, serverScript: URL, root: String = "root") throws {
+    public init(bundle: String, serverScript: URL, root: String = "root", eventLoop: EventLoop) throws {
         self.bundle = bundle
         self.root = root
+        self.context = NIOJSContext()
         
-        self.context["self"] = self.context.global
-        try self.context.evaluateScript(String(contentsOf: serverScript))
+        self.context.start()
         
-        if let exception = self.context.exception {
-            throw Error(message: exception.stringValue)
-        }
+        try self.context.run(eventLoop: eventLoop) {
+            
+            $0["self"] = $0.global
+            
+            try $0.evaluateScript(String(contentsOf: serverScript))
+            
+            if let exception = $0.exception {
+                throw Error(message: exception.stringValue)
+            }
+        }.wait()
+    }
+    
+    deinit {
+        context.shutdownGracefully { _ in }
     }
     
     public func boot(routes: RoutesBuilder) throws {
         
-        routes.get { req -> Response in
-            let response = try Response(status: .ok, body: .init(string: self.html(req.url.path)))
-            response.headers.contentType = .html
-            return response
+        routes.get { req -> EventLoopFuture<Response> in
+            
+            self.html(req.url.path, eventLoop: req.eventLoop).map { html in
+                
+                let response = Response(status: .ok, body: .init(string: html))
+                response.headers.contentType = .html
+                return response
+            }
         }
         
-        routes.get("**") { req -> Response in
-            let response = try Response(status: .ok, body: .init(string: self.html(req.url.path)))
-            response.headers.contentType = .html
-            return response
+        routes.get("**") { req -> EventLoopFuture<Response> in
+            
+            self.html(req.url.path, eventLoop: req.eventLoop).map { html in
+                
+                let response = Response(status: .ok, body: .init(string: html))
+                response.headers.contentType = .html
+                return response
+            }
         }
     }
 }
@@ -65,43 +84,46 @@ extension ReactController {
         public var message: String?
     }
     
-    private func html(_ path: String) throws -> String {
+    private func html(_ path: String, eventLoop: EventLoop) -> EventLoopFuture<String> {
         
-        let result = context.global.invokeMethod("render", withArguments: [JSObject(string: path, in: context)])
-        
-        if let exception = context.exception {
-            throw Error(message: exception.stringValue)
+        return context.run(eventLoop: eventLoop) { context in
+            
+            let result = context.global.invokeMethod("render", withArguments: [JSObject(string: path, in: context)])
+            
+            if let exception = context.exception {
+                throw Error(message: exception.stringValue)
+            }
+            
+            let html = result["html"].stringValue ?? ""
+            let css = result["css"].stringValue ?? ""
+            
+            return """
+            <!doctype html>
+            <html>
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+                    <style>
+                        html,
+                        body {
+                            height: 100%;
+                        }
+                        body {
+                            overflow: hidden;
+                        }
+                        #\(self.root) {
+                            display: flex;
+                            height: 100%;
+                        }
+                    </style>
+                    \(css)
+                </head>
+                <body>
+                    <div id="\(self.root)">\(html)</div>
+                    <script src="\(self.bundle)"></script>
+                </body>
+            </html>
+            """
         }
-        
-        let html = result["html"].stringValue ?? ""
-        let css = result["css"].stringValue ?? ""
-        
-        return """
-        <!doctype html>
-        <html>
-            <head>
-                <meta charset="utf-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-                <style>
-                    html,
-                    body {
-                        height: 100%;
-                    }
-                    body {
-                        overflow: hidden;
-                    }
-                    #\(root) {
-                        display: flex;
-                        height: 100%;
-                    }
-                </style>
-                \(css)
-            </head>
-            <body>
-                <div id="\(root)">\(html)</div>
-                <script src="\(bundle)"></script>
-            </body>
-        </html>
-        """
     }
 }
