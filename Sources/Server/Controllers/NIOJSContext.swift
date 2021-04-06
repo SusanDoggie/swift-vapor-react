@@ -55,6 +55,10 @@ extension NIOJSContext {
 
 extension NIOJSContext {
     
+    public func run<T>(callback: @escaping (JSContext) throws -> T) rethrows -> T {
+        return try callback(self.context)
+    }
+    
     public func run<T>(eventLoop: EventLoop, callback: @escaping (JSContext) throws -> T) -> EventLoopFuture<T> {
         
         return self.threadPool.runIfActive(eventLoop: eventLoop) {

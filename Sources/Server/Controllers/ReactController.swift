@@ -30,14 +30,14 @@ public class ReactController: RouteCollection {
     
     let context: NIOJSContext
     
-    public init(bundle: String, serverScript: URL, root: String = "root", eventLoop: EventLoop) throws {
+    public init(bundle: String, serverScript: URL, root: String = "root") throws {
         self.bundle = bundle
         self.root = root
         self.context = NIOJSContext()
         
         self.context.start()
         
-        try self.context.run(eventLoop: eventLoop) {
+        try self.context.run {
             
             $0["self"] = $0.global
             
@@ -46,7 +46,7 @@ public class ReactController: RouteCollection {
             if let exception = $0.exception {
                 throw Error(message: exception.stringValue)
             }
-        }.wait()
+        }
     }
     
     deinit {
