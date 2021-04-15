@@ -25,5 +25,4 @@
 
 @_exported import Vapor
 
-@_exported import DoggieCore
 @_exported import SwiftJS
