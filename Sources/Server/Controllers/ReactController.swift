@@ -81,9 +81,9 @@ extension ReactController {
     
     private func html(_ path: String, eventLoop: EventLoop) throws -> EventLoopFuture<Response> {
         
-        guard let render = self.render else { throw Abort(.internalServerError) }
-        
         return context.run(eventLoop: eventLoop) { context in
+            
+            guard let render = self.render else { throw Abort(.internalServerError) }
             
             let result = render.call(withArguments: [JSObject(string: path, in: context)])
             
