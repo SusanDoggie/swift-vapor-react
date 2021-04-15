@@ -95,11 +95,10 @@ extension ReactController {
             let css = result["css"].stringValue ?? ""
             
             let statusCode = result["statusCode"].doubleValue.flatMap(Int.init(exactly:)) ?? 200
-            let title = result["title"].stringValue
-            let meta = result["meta"].dictionary
+            let meta = result["meta"].dictionary ?? [:]
             
             var meta_string: [String] = []
-            if let title = title {
+            if let title = result["title"].stringValue {
                 meta_string.append("<title>\(title)</title>")
             }
             for (name, content) in meta {
