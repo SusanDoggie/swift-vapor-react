@@ -21,5 +21,4 @@ global.render = function(location) {
 	context.css = ReactDOMServer.renderToStaticMarkup(getStyleElement());
 	
 	return context;
-	;
 }

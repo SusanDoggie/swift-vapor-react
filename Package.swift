@@ -36,6 +36,7 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
+        .package(url: "https://github.com/SusanDoggie/Doggie.git", .branch("main")),
         .package(url: "https://github.com/SusanDoggie/SwiftJS.git", from: "1.2.2"),
     ],
     targets: [
@@ -43,6 +44,7 @@ let package = Package(
             name: "Server",
             dependencies: [
                 .product(name: "Vapor", package: "vapor"),
+                .product(name: "DoggieCore", package: "Doggie"),
                 .product(name: "SwiftJS", package: "SwiftJS"),
             ],
             exclude: [
