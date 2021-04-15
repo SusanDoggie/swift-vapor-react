@@ -56,23 +56,11 @@ public class ReactController: RouteCollection {
     public func boot(routes: RoutesBuilder) throws {
         
         routes.get { req -> EventLoopFuture<Response> in
-            
-            self.html(req.url.path, eventLoop: req.eventLoop).map { html in
-                
-                let response = Response(status: .ok, body: .init(string: html))
-                response.headers.contentType = .html
-                return response
-            }
+            self.html(req.url.path, eventLoop: req.eventLoop)
         }
         
         routes.get("**") { req -> EventLoopFuture<Response> in
-            
-            self.html(req.url.path, eventLoop: req.eventLoop).map { html in
-                
-                let response = Response(status: .ok, body: .init(string: html))
-                response.headers.contentType = .html
-                return response
-            }
+            self.html(req.url.path, eventLoop: req.eventLoop)
         }
     }
 }
@@ -84,7 +72,7 @@ extension ReactController {
         public var message: String?
     }
     
-    private func html(_ path: String, eventLoop: EventLoop) -> EventLoopFuture<String> {
+    private func html(_ path: String, eventLoop: EventLoop) -> EventLoopFuture<Response> {
         
         return context.run(eventLoop: eventLoop) { context in
             
@@ -94,15 +82,34 @@ extension ReactController {
                 throw Error(message: exception.stringValue)
             }
             
+            print(result.properties)
+            
             let html = result["html"].stringValue ?? ""
             let css = result["css"].stringValue ?? ""
             
-            return """
+            let statusCode = result["statusCode"].doubleValue.flatMap(Int.init(exactly:)) ?? 200
+            let title = result["title"].stringValue
+            let meta = result["meta"].dictionary
+            
+            var meta_string: [String] = []
+            if let title = title {
+                meta_string.append("<title>\(title)</title>")
+            }
+            for (name, content) in meta where content.isString {
+                guard let content = content.stringValue else { continue }
+                meta_string.append("<meta name=\"\(name)\" content=\"\(content)\">")
+            }
+            
+            var headers = HTTPHeaders()
+            headers.contentType = .html
+            
+            let body = Response.Body(string: """
             <!doctype html>
             <html>
                 <head>
                     <meta charset="utf-8">
                     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+                    \(meta_string.joined(separator: "\n"))
                     <style>
                         html,
                         body {
@@ -123,7 +130,9 @@ extension ReactController {
                     <script src="\(self.bundle)"></script>
                 </body>
             </html>
-            """
+            """)
+            
+            return Response(status: .init(statusCode: statusCode), headers: headers, body: body)
         }
     }
 }

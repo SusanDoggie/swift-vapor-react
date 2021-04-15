@@ -9,12 +9,23 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Home from './pages/Home';
 import About from './pages/About';
 
-const Page = (props) => {
-  React.useEffect(() => {
-    document.title = props.title || "";
-  }, [props.title]);
-  return props.children;
-};
+class Page extends React.Component {
+
+  render() {
+    const { children, author, description, keywords, meta, ...props } = this.props;
+    return (
+      <Route render={({ staticContext }) => {
+        if (staticContext) {
+          for (const [key, value] of Object.entries(props)) {
+            staticContext[key] = value;
+          }
+          staticContext.meta = { author, description, keywords, ...meta };
+        }
+        return children;
+      }} {...props} />
+    );
+  }
+}
 
 export default class App extends React.Component {
   render() {
@@ -25,12 +36,8 @@ export default class App extends React.Component {
           insets: { top: 0, left: 0, right: 0, bottom: 0 },
         }}>
         <Switch>
-        <Route exact path='/'>
-          <Page title="Home"><Home /></Page>
-        </Route>
-        <Route path='/about'>
-          <Page title="About"><About /></Page>
-        </Route>
+        <Page exact path='/' title='Home'><Home /></Page>
+        <Page path='/about' title='About'><About /></Page>
         </Switch>
       </SafeAreaProvider>
     );
