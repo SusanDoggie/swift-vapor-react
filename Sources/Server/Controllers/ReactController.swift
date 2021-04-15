@@ -29,6 +29,7 @@ public class ReactController: RouteCollection {
     public var bundle: String
     
     let context: NIOJSContext
+    var render: JSObject?
     
     public init(bundle: String, serverScript: URL, root: String = "root") throws {
         self.bundle = bundle
@@ -43,6 +44,12 @@ public class ReactController: RouteCollection {
             
             try $0.evaluateScript(String(contentsOf: serverScript))
             
+            self.render = $0.global["render"]
+            self.render?.freeze()
+            
+            $0.global.removeProperty("render")
+            $0.garbageCollect()
+            
             if let exception = $0.exception {
                 throw Error(message: exception.stringValue)
             }
@@ -56,11 +63,11 @@ public class ReactController: RouteCollection {
     public func boot(routes: RoutesBuilder) throws {
         
         routes.get { req -> EventLoopFuture<Response> in
-            self.html(req.url.path, eventLoop: req.eventLoop)
+            try self.html(req.url.path, eventLoop: req.eventLoop)
         }
         
         routes.get("**") { req -> EventLoopFuture<Response> in
-            self.html(req.url.path, eventLoop: req.eventLoop)
+            try self.html(req.url.path, eventLoop: req.eventLoop)
         }
     }
 }
@@ -72,17 +79,17 @@ extension ReactController {
         public var message: String?
     }
     
-    private func html(_ path: String, eventLoop: EventLoop) -> EventLoopFuture<Response> {
+    private func html(_ path: String, eventLoop: EventLoop) throws -> EventLoopFuture<Response> {
+        
+        guard let render = self.render else { throw Abort(.internalServerError) }
         
         return context.run(eventLoop: eventLoop) { context in
             
-            let result = context.global.invokeMethod("render", withArguments: [JSObject(string: path, in: context)])
+            let result = render.call(withArguments: [JSObject(string: path, in: context)])
             
             if let exception = context.exception {
                 throw Error(message: exception.stringValue)
             }
-            
-            print(result.properties)
             
             let html = result["html"].stringValue ?? ""
             let css = result["css"].stringValue ?? ""
@@ -95,7 +102,7 @@ extension ReactController {
             if let title = title {
                 meta_string.append("<title>\(title)</title>")
             }
-            for (name, content) in meta where content.isString {
+            for (name, content) in meta {
                 guard let content = content.stringValue else { continue }
                 meta_string.append("<meta name=\"\(name)\" content=\"\(content)\">")
             }
