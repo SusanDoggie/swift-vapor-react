@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import React from 'react';
-import { Switch, Route } from 'react-router-dom';
+import { Switch, Route, Redirect } from 'react-router-dom';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // const Home = loadable(() => import('./pages/Home'));
@@ -40,6 +40,7 @@ export default class App extends React.Component {
         <Switch>
         <Page exact path='/' title='Home'><Home /></Page>
         <Page path='/about' title='About'><About /></Page>
+        <Page path='/redirect'><Redirect to='/about' /></Page>
         <Page path='*' title='404 Not Found' statusCode={404}><NotFound /></Page>
         </Switch>
       </SafeAreaProvider>

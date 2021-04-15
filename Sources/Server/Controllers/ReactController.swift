@@ -61,14 +61,8 @@ public class ReactController: RouteCollection {
     }
     
     public func boot(routes: RoutesBuilder) throws {
-        
-        routes.get { req -> EventLoopFuture<Response> in
-            try self.html(req.url.path, eventLoop: req.eventLoop)
-        }
-        
-        routes.get("**") { req -> EventLoopFuture<Response> in
-            try self.html(req.url.path, eventLoop: req.eventLoop)
-        }
+        routes.get(use: self.html)
+        routes.get("**", use: self.html)
     }
 }
 
@@ -79,16 +73,20 @@ extension ReactController {
         public var message: String?
     }
     
-    private func html(_ path: String, eventLoop: EventLoop) throws -> EventLoopFuture<Response> {
+    private func html(_ req: Request) throws -> EventLoopFuture<Response> {
         
-        return context.run(eventLoop: eventLoop) { context in
+        return context.run(eventLoop: req.eventLoop) { context in
             
             guard let render = self.render else { throw Abort(.internalServerError) }
             
-            let result = render.call(withArguments: [JSObject(string: path, in: context)]).toJson() ?? [:]
+            let result = render.call(withArguments: [JSObject(string: req.url.path, in: context)]).toJson() ?? [:]
             
             if let exception = context.exception {
                 throw Error(message: exception.stringValue)
+            }
+            
+            if let url = result["url"].stringValue {
+                return req.redirect(to: url)
             }
             
             let html = result["html"].stringValue ?? ""
