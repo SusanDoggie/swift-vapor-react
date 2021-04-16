@@ -51,7 +51,7 @@ public class ReactController: RouteCollection {
             $0.garbageCollect()
             
             if let exception = $0.exception {
-                throw Error(message: exception.stringValue)
+                throw Error(message: exception["message"].stringValue)
             }
         }
     }
@@ -72,6 +72,9 @@ extension ReactController {
         
         public var message: String?
     }
+}
+
+extension ReactController {
     
     private func html(_ req: Request) throws -> EventLoopFuture<Response> {
         
@@ -79,10 +82,14 @@ extension ReactController {
             
             guard let render = self.render else { throw Abort(.internalServerError) }
             
-            let result = render.call(withArguments: [JSObject(string: req.url.path, in: context)])
+            var location: Json = ["pathname": "\(req.url.path)"]
+            if let query = req.url.query { location["search"] = "?\(query)" }
+            if let fragment = req.url.fragment { location["hash"] = "#\(fragment)" }
+            
+            let result = render.call(withArguments: [JSObject(json: location, in: context)])
             
             if let exception = context.exception {
-                throw Error(message: exception.stringValue)
+                throw Abort(.internalServerError, reason: exception["message"].stringValue)
             }
             
             if let url = result["url"].stringValue {
