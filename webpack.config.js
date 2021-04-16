@@ -3,6 +3,7 @@
 const path = require('path');
 const webpack = require('webpack');
 const TerserPlugin = require('terser-webpack-plugin');
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 
 const IS_PRODUCTION = process.env.NODE_ENV !== 'development';
 
@@ -59,11 +60,12 @@ const webpackConfiguration = {
 		],
 	},
 	plugins: [ 
+		new NodePolyfillPlugin(),
 		new webpack.DefinePlugin({
 			'process.env': {
 				'NODE_ENV': IS_PRODUCTION ? '"production"' : 'undefined'
 			}
-		})
+		}),
 	],
 	module: {
 	  rules: [

@@ -3,10 +3,8 @@ import { AppRegistry } from 'react-native';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 
-class Main extends React.Component {
-	render() {
-		return <BrowserRouter><App /></BrowserRouter>;
-	}
+function Main(props) {
+	return <BrowserRouter><App /></BrowserRouter>;
 }
 
 AppRegistry.registerComponent('App', () => Main);

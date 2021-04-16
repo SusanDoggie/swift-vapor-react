@@ -8,10 +8,8 @@ global.render = function(location) {
 
 	const context = {};
 	
-	class Main extends React.Component {
-		render() {
-			return <StaticRouter location={location} context={context}><App /></StaticRouter>;
-		}
+	function Main(props) {
+		return <StaticRouter location={location} context={context}><App /></StaticRouter>;
 	}
 	
 	AppRegistry.registerComponent('App', () => Main);

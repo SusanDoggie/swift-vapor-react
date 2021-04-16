@@ -11,22 +11,18 @@ import Home from './pages/Home';
 import About from './pages/About';
 import NotFound from './pages/NotFound';
 
-class Page extends React.Component {
-
-  render() {
-    const { children, author, description, keywords, meta, ...props } = this.props;
-    return (
-      <Route render={({ staticContext }) => {
-        if (staticContext) {
-          for (const [key, value] of Object.entries(props)) {
-            staticContext[key] = value;
-          }
-          staticContext.meta = { author, description, keywords, ...meta };
+function Page({ children, author, description, keywords, meta, ...props }) {
+  return (
+    <Route render={({ staticContext }) => {
+      if (staticContext) {
+        for (const [key, value] of Object.entries(props)) {
+          staticContext[key] = value;
         }
-        return children;
-      }} {...props} />
-    );
-  }
+        staticContext.meta = { author, description, keywords, ...meta };
+      }
+      return children;
+    }} {...props} />
+  );
 }
 
 export default class App extends React.Component {
