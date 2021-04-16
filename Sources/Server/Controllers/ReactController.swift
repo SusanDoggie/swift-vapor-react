@@ -79,7 +79,7 @@ extension ReactController {
             
             guard let render = self.render else { throw Abort(.internalServerError) }
             
-            let result = render.call(withArguments: [JSObject(string: req.url.path, in: context)]).toJson() ?? [:]
+            let result = render.call(withArguments: [JSObject(string: req.url.path, in: context)])
             
             if let exception = context.exception {
                 throw Error(message: exception.stringValue)
