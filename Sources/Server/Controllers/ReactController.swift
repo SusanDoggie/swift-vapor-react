@@ -29,7 +29,6 @@ public class ReactController: RouteCollection {
     public var bundle: String
     
     let context: NIOJSContext
-    var render: JSObject?
     
     public init(bundle: String, serverScript: URL, root: String = "root") throws {
         self.bundle = bundle
@@ -43,12 +42,6 @@ public class ReactController: RouteCollection {
             $0["self"] = $0.global
             
             try $0.evaluateScript(String(contentsOf: serverScript))
-            
-            self.render = $0.global["render"]
-            self.render?.freeze()
-            
-            $0.global.removeProperty("render")
-            $0.garbageCollect()
             
             if let exception = $0.exception {
                 throw Error(message: exception["message"].stringValue)
@@ -80,13 +73,11 @@ extension ReactController {
         
         return context.run(eventLoop: req.eventLoop) { context in
             
-            guard let render = self.render else { throw Abort(.internalServerError) }
-            
             var location: Json = ["pathname": "\(req.url.path)"]
             if let query = req.url.query { location["search"] = "?\(query)" }
             if let fragment = req.url.fragment { location["hash"] = "#\(fragment)" }
             
-            let result = render.call(withArguments: [JSObject(json: location, in: context)])
+            let result = context.global["render"].call(withArguments: [JSObject(json: location, in: context)])
             
             if let exception = context.exception {
                 throw Abort(.internalServerError, reason: exception["message"].stringValue)

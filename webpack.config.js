@@ -85,7 +85,14 @@ module.exports = [
 	Object.assign({}, webpackConfiguration, {
 		entry: { 
 			main: './Sources/Server/js/main.js',
-			server: './Sources/Server/js/server.js',
+			server: {
+				import: './Sources/Server/js/server.js',
+				library: {
+					name: 'render',
+					type: 'global',
+					export: 'default'
+				}
+			},
 		},
 		output: {
 			path: path.join(__dirname, 'Sources/Server/Public'),

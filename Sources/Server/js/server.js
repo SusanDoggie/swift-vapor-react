@@ -4,7 +4,7 @@ import { StaticRouter } from 'react-router-dom';
 import ReactDOMServer from 'react-dom/server';
 import App from './App';
 
-global.render = function(location) {
+export default function(location) {
 
 	const context = {};
 	
