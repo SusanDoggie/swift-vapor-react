@@ -17,6 +17,7 @@ COPY --from=bundler /worker .
 RUN swift build -c release \
  && mkdir app && cp -r "$(swift build -c release --show-bin-path)" app/ \
  && cd app \
+ && rm -rf *.o \
  && rm -rf *.build \
  && rm -rf *.swiftdoc \
  && rm -rf *.swiftmodule \
