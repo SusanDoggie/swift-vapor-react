@@ -16,7 +16,7 @@ COPY --from=bundler /worker .
 
 RUN swift build -c release \
  && mkdir app && cp -r "$(swift build -c release --show-bin-path)" app/ \
- && cd app \
+ && cd app/release \
  && rm -rf *.o \
  && rm -rf *.build \
  && rm -rf *.swiftdoc \
@@ -33,9 +33,9 @@ RUN apt-get update \
  && rm -r /var/lib/apt/lists/*
 
 WORKDIR /app
-COPY --from=builder /worker/app .
+COPY --from=builder /worker/app/release .
 
 EXPOSE 8080
 
-ENTRYPOINT ["./release/Server"]
+ENTRYPOINT ["./Server"]
 CMD ["serve", "--env", "production", "--hostname", "0.0.0.0"]
