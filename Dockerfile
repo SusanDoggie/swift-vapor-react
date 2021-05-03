@@ -32,10 +32,10 @@ RUN apt-get update \
  && apt-get install -y libjavascriptcoregtk-4.0-dev \
  && rm -r /var/lib/apt/lists/*
 
-WORKDIR /app
-COPY --from=builder /worker/app/release .
+WORKDIR /worker/.build/x86_64-unknown-linux-gnu
+COPY --from=builder /worker/app .
 
 EXPOSE 8080
 
-ENTRYPOINT ["./Server"]
+ENTRYPOINT ["./release/Server"]
 CMD ["serve", "--env", "production", "--hostname", "0.0.0.0"]
