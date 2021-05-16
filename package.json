@@ -5,9 +5,13 @@
   "scripts": {
     "clean": "rm -rf ./Sources/Server/Public/*/",
     "prebuild": "npm run clean && webpack --mode production",
+    "prebuild:dev": "npm run clean && webpack --mode development",
     "build": "swift build -c release",
+    "build:dev": "swift build -c debug",
     "prestart": "npm run clean && webpack --mode production",
-    "start": "swift run -c release"
+    "prestart:dev": "npm run clean && webpack --mode development",
+    "start": "swift run -c release",
+    "start:dev": "swift run -c debug"
   },
   "devDependencies": {
     "@babel/core": "^7.13.8",
