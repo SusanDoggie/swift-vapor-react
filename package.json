@@ -31,7 +31,6 @@
   "dependencies": {
     "@babel/plugin-transform-runtime": "^7.13.10",
     "@loadable/component": "^5.14.1",
-    "@ungap/url-search-params": "^0.2.2",
     "lodash": "^4.17.21",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
@@ -39,6 +38,7 @@
     "react-native-safe-area-context": "^3.1.9",
     "react-native-web": "^0.15.0",
     "react-router": "^5.2.0",
-    "react-router-dom": "^5.2.0"
+    "react-router-dom": "^5.2.0",
+    "url-polyfill": "^1.1.12"
   }
 }

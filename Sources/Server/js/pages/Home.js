@@ -2,8 +2,7 @@ import _ from 'lodash';
 import React from 'react';
 import { Text, View, Image } from 'react-native';
 import { Link } from 'react-router-dom';
-import { withRouter } from "react-router";
-import URLSearchParams from '@ungap/url-search-params';
+import { withRouter } from 'react-router';
 
 import birdImg from '../../asserts/bird.jpeg';
 

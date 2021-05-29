@@ -1,3 +1,4 @@
+import 'url-polyfill';
 import React from 'react';
 import { AppRegistry } from 'react-native';
 import { StaticRouter } from 'react-router-dom';
