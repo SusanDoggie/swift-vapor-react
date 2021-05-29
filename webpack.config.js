@@ -33,16 +33,24 @@ module.exports = (env, argv) => {
 		}
 	};
 	
+	const cssLoaderConfiguration = {
+		test: /\.css$/,
+        use: [
+			'style-loader', 
+			'css-loader',
+		],
+	};
+	  
 	const imageLoaderConfiguration = {
-	  test: /\.(gif|jpe?g|a?png|svg)$/,
-	  use: {
-		loader: 'file-loader',
-		options: {
-			name: '[name].[contenthash].[ext]',
-			publicPath: '/images',
-			outputPath: 'images',
+		test: /\.(gif|jpe?g|a?png|svg)$/,
+		use: {
+			loader: 'file-loader',
+			options: {
+				name: '[name].[contenthash].[ext]',
+				publicPath: '/images',
+				outputPath: 'images',
+			}
 		}
-	  }
 	};
 	
 	const webpackConfiguration = {
@@ -72,7 +80,8 @@ module.exports = (env, argv) => {
 		module: {
 		  rules: [
 			babelLoaderConfiguration,
-			imageLoaderConfiguration
+			cssLoaderConfiguration,
+			imageLoaderConfiguration,
 		  ]
 		},
 		resolve: {
