@@ -36,11 +36,16 @@ module.exports = (env, argv) => {
 	const cssLoaderConfiguration = {
 		test: /\.css$/,
         use: [
-			'style-loader', 
+			{ 
+				loader: 'style-loader',
+				options: {
+					injectType: 'singletonStyleTag'
+				}
+			}, 
 			'css-loader',
 		],
 	};
-	  
+	
 	const imageLoaderConfiguration = {
 		test: /\.(gif|jpe?g|a?png|svg)$/,
 		use: {
