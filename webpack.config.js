@@ -10,7 +10,7 @@ module.exports = (env, argv) => {
 	const IS_PRODUCTION = argv.mode !== 'development';
 	
 	const babelLoaderConfiguration = {
-		test: /\.(ts|tsx|m?js)?$/,
+		test: /\.(ts|tsx|m?js)?$/i,
 		use: {
 		  loader: 'babel-loader',
 		  options: {
@@ -34,7 +34,7 @@ module.exports = (env, argv) => {
 	};
 	
 	const cssLoaderConfiguration = {
-		test: /\.css$/,
+		test: /\.css$/i,
         use: [
 			{ 
 				loader: 'style-loader',
@@ -47,7 +47,7 @@ module.exports = (env, argv) => {
 	};
 	
 	const imageLoaderConfiguration = {
-		test: /\.(gif|jpe?g|a?png|svg)$/,
+		test: /\.(gif|jpe?g|a?png|svg)$/i,
 		use: {
 			loader: 'file-loader',
 			options: {
