@@ -39,6 +39,8 @@
     "react-native-web": "^0.15.0",
     "react-router": "^5.2.0",
     "react-router-dom": "^5.2.0",
-    "url-polyfill": "^1.1.12"
+    "text-encoding": "^0.7.0",
+    "uuid": "^8.3.2",
+    "whatwg-url": "^9.0.0"
   }
 }

@@ -1,3 +1,4 @@
+import './polyfill';
 import React from 'react';
 import { AppRegistry } from 'react-native';
 import { BrowserRouter } from 'react-router-dom';
