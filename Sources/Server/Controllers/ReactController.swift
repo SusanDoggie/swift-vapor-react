@@ -28,6 +28,16 @@ public class ReactController: RouteCollection {
     public var root: String
     public var bundle: String
     
+    #if DEBUG
+    
+    public var serverSideRenderEnabled: Bool = false
+    
+    #else
+    
+    public var serverSideRenderEnabled: Bool = true
+    
+    #endif
+    
     let context: NIOJSContext
     
     public init(bundle: String, serverScript: URL, root: String = "root") throws {
@@ -69,70 +79,107 @@ extension ReactController {
     
     private func html(_ req: Request) throws -> EventLoopFuture<Response> {
         
-        return context.run(eventLoop: req.eventLoop) { context in
+        if serverSideRenderEnabled {
             
-            var location: Json = ["pathname": "\(req.url.path)"]
-            if let query = req.url.query { location["search"] = "?\(query)" }
-            if let fragment = req.url.fragment { location["hash"] = "#\(fragment)" }
-            
-            let result = context.global["render"].call(withArguments: [JSObject(json: location, in: context)])
-            
-            if let exception = context.exception {
-                throw Abort(.internalServerError, reason: exception["message"].stringValue)
+            return context.run(eventLoop: req.eventLoop) { context in
+                
+                var location: Json = ["pathname": "\(req.url.path)"]
+                if let query = req.url.query { location["search"] = "?\(query)" }
+                if let fragment = req.url.fragment { location["hash"] = "#\(fragment)" }
+                
+                let result = context.global["render"].call(withArguments: [JSObject(json: location, in: context)])
+                
+                if let exception = context.exception {
+                    throw Abort(.internalServerError, reason: exception["message"].stringValue)
+                }
+                
+                if let url = result["url"].stringValue {
+                    return req.redirect(to: url)
+                }
+                
+                let html = result["html"].stringValue ?? ""
+                let css = result["css"].stringValue ?? ""
+                
+                let statusCode = result["statusCode"].doubleValue.flatMap(Int.init(exactly:)) ?? 200
+                let meta = result["meta"].dictionary ?? [:]
+                
+                var meta_string: [String] = []
+                if let title = result["title"].stringValue {
+                    meta_string.append("<title>\(title)</title>")
+                }
+                for (name, content) in meta {
+                    guard let content = content.stringValue else { continue }
+                    meta_string.append("<meta name=\"\(name)\" content=\"\(content)\">")
+                }
+                
+                var headers = HTTPHeaders()
+                headers.contentType = .html
+                
+                let body = Response.Body(string: """
+                    <!doctype html>
+                    <html>
+                        <head>
+                            <meta charset="utf-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+                            \(meta_string.joined(separator: "\n"))
+                            <style>
+                                html,
+                                body {
+                                    height: 100%;
+                                }
+                                body {
+                                    overflow: hidden;
+                                }
+                                #\(self.root) {
+                                    display: flex;
+                                    height: 100%;
+                                }
+                            </style>
+                            \(css)
+                        </head>
+                        <body>
+                            <div id="\(self.root)">\(html)</div>
+                            <script src="\(self.bundle)"></script>
+                        </body>
+                    </html>
+                    """)
+                
+                return Response(status: .init(statusCode: statusCode), headers: headers, body: body)
+                
+            } else {
+                
+                var headers = HTTPHeaders()
+                headers.contentType = .html
+                
+                let body = Response.Body(string: """
+                <!doctype html>
+                <html>
+                    <head>
+                        <meta charset="utf-8">
+                        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+                        <style>
+                            html,
+                            body {
+                                height: 100%;
+                            }
+                            body {
+                                overflow: hidden;
+                            }
+                            #\(self.root) {
+                                display: flex;
+                                height: 100%;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div id="\(self.root)"></div>
+                        <script src="\(self.bundle)"></script>
+                    </body>
+                </html>
+                """)
+                
+                return req.eventLoop.makeSucceededFuture(Response(status: .ok, headers: headers, body: body))
             }
-            
-            if let url = result["url"].stringValue {
-                return req.redirect(to: url)
-            }
-            
-            let html = result["html"].stringValue ?? ""
-            let css = result["css"].stringValue ?? ""
-            
-            let statusCode = result["statusCode"].doubleValue.flatMap(Int.init(exactly:)) ?? 200
-            let meta = result["meta"].dictionary ?? [:]
-            
-            var meta_string: [String] = []
-            if let title = result["title"].stringValue {
-                meta_string.append("<title>\(title)</title>")
-            }
-            for (name, content) in meta {
-                guard let content = content.stringValue else { continue }
-                meta_string.append("<meta name=\"\(name)\" content=\"\(content)\">")
-            }
-            
-            var headers = HTTPHeaders()
-            headers.contentType = .html
-            
-            let body = Response.Body(string: """
-            <!doctype html>
-            <html>
-                <head>
-                    <meta charset="utf-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-                    \(meta_string.joined(separator: "\n"))
-                    <style>
-                        html,
-                        body {
-                            height: 100%;
-                        }
-                        body {
-                            overflow: hidden;
-                        }
-                        #\(self.root) {
-                            display: flex;
-                            height: 100%;
-                        }
-                    </style>
-                    \(css)
-                </head>
-                <body>
-                    <div id="\(self.root)">\(html)</div>
-                    <script src="\(self.bundle)"></script>
-                </body>
-            </html>
-            """)
-            
-            return Response(status: .init(statusCode: statusCode), headers: headers, body: body)
         }
     }
 }
