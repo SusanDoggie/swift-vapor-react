@@ -3,6 +3,7 @@ import React from 'react';
 import { Text, View, Image } from 'react-native';
 import { Link } from 'react-router-dom';
 import { withRouter } from 'react-router';
+import { URLSearchParams } from 'url';
 
 import birdImg from '../../asserts/bird.jpeg';
 
