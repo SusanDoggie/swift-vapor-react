@@ -17,3 +17,10 @@ if (!global.SharedArrayBuffer) {
         }
     };
 }
+
+if (!global.crypto) {
+    global.crypto = require('crypto');
+}
+if (!global.crypto.getRandomValues) {
+    global.crypto.getRandomValues = require('polyfill-crypto.getrandomvalues');
+}
