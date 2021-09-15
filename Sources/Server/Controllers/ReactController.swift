@@ -145,13 +145,14 @@ extension ReactController {
                     """)
                 
                 return Response(status: .init(statusCode: statusCode), headers: headers, body: body)
-                
-            } else {
-                
-                var headers = HTTPHeaders()
-                headers.contentType = .html
-                
-                let body = Response.Body(string: """
+            }
+            
+        } else {
+            
+            var headers = HTTPHeaders()
+            headers.contentType = .html
+            
+            let body = Response.Body(string: """
                 <!doctype html>
                 <html>
                     <head>
@@ -177,9 +178,8 @@ extension ReactController {
                     </body>
                 </html>
                 """)
-                
-                return req.eventLoop.makeSucceededFuture(Response(status: .ok, headers: headers, body: body))
-            }
+            
+            return req.eventLoop.makeSucceededFuture(Response(status: .ok, headers: headers, body: body))
         }
     }
 }
