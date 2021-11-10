@@ -23,4 +23,6 @@
 //  THE SOFTWARE.
 //
 
-@_exported import ReactController
+@_exported import Vapor
+
+@_exported import SwiftJS

@@ -32,18 +32,25 @@ let package = Package(
         .macOS(.v10_15),
     ],
     products: [
+        .library(name: "ReactController", targets: ["ReactController"]),
         .executable(name: "Server", targets: ["Server"]),
     ],
     dependencies: [
         .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
-        .package(url: "https://github.com/SusanDoggie/SwiftJS.git", from: "1.2.2"),
+        .package(url: "https://github.com/SusanDoggie/SwiftJS.git", from: "1.2.3"),
     ],
     targets: [
         .target(
-            name: "Server",
+            name: "ReactController",
             dependencies: [
                 .product(name: "Vapor", package: "vapor"),
                 .product(name: "SwiftJS", package: "SwiftJS"),
+            ]
+        ),
+        .target(
+            name: "Server",
+            dependencies: [
+                .target(name: "ReactController"),
             ],
             exclude: [
                 "js",
