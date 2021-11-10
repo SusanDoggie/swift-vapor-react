@@ -3,7 +3,7 @@
   "license": "MIT",
   "repository": "https://github.com/SusanDoggie/swift-vapor-react",
   "scripts": {
-    "clean": "rm -rf ./Sources/Server/Public/*/",
+    "clean": "rm -rf ./Sources/ReactSampleServer/Public/*/",
     "prebuild": "npm run clean && webpack --mode production",
     "prebuild:dev": "npm run clean && webpack --mode development",
     "build": "swift build -c release",

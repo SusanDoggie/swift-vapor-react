@@ -103,9 +103,9 @@ module.exports = (env, argv) => {
 	return [
 		Object.assign({}, webpackConfiguration, {
 			entry: { 
-				main: './Sources/Server/js/main.js',
+				main: './Sources/ReactSampleServer/js/main.js',
 				server: {
-					import: './Sources/Server/js/server.js',
+					import: './Sources/ReactSampleServer/js/server.js',
 					library: {
 						name: 'render',
 						type: 'global',
@@ -114,7 +114,7 @@ module.exports = (env, argv) => {
 				},
 			},
 			output: {
-				path: path.join(__dirname, 'Sources/Server/Public'),
+				path: path.join(__dirname, 'Sources/ReactSampleServer/Public'),
 				publicPath: '/',
 				filename: 'js/[name].js'
 			}

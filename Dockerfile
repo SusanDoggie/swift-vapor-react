@@ -37,5 +37,5 @@ COPY --from=builder /worker/app .
 
 EXPOSE 8080
 
-ENTRYPOINT ["./release/Server"]
+ENTRYPOINT ["./release/ReactSampleServer"]
 CMD ["serve", "--env", "production", "--hostname", "0.0.0.0"]
