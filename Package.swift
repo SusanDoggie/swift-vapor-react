@@ -27,13 +27,13 @@
 import PackageDescription
 
 let package = Package(
-    name: "Server",
+    name: "ReactController",
     platforms: [
         .macOS(.v10_15),
     ],
     products: [
         .library(name: "ReactController", targets: ["ReactController"]),
-        .executable(name: "Server", targets: ["Server"]),
+        .executable(name: "ReactSampleServer", targets: ["ReactSampleServer"]),
     ],
     dependencies: [
         .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
@@ -48,7 +48,7 @@ let package = Package(
             ]
         ),
         .target(
-            name: "Server",
+            name: "ReactSampleServer",
             dependencies: [
                 .target(name: "ReactController"),
             ],
