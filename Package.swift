@@ -27,7 +27,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "ReactController",
+    name: "swift-vapor-react",
     platforms: [
         .macOS(.v10_15),
     ],
