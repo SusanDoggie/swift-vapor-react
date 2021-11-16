@@ -9,7 +9,7 @@ export default function(location) {
 
 	const context = {};
 	
-	function Main(props) {
+	function Main() {
 		return <StaticRouter location={location} context={context}><App /></StaticRouter>;
 	}
 	

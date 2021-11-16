@@ -6,11 +6,9 @@ import App from './App';
 
 import './default.css';
 
-function Main(props) {
+function Main() {
 	return <BrowserRouter><App /></BrowserRouter>;
 }
 
 AppRegistry.registerComponent('App', () => Main);
-AppRegistry.runApplication('App', {
-	rootTag: document.getElementById('root')
-});
+AppRegistry.runApplication('App', { rootTag: document.getElementById('root') });
