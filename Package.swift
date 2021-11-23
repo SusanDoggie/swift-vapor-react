@@ -33,7 +33,6 @@ let package = Package(
     ],
     products: [
         .library(name: "ReactController", targets: ["ReactController"]),
-        .executable(name: "ReactSampleServer", targets: ["ReactSampleServer"]),
     ],
     dependencies: [
         .package(url: "https://github.com/vapor/vapor.git", from: "4.0.0"),
@@ -45,22 +44,6 @@ let package = Package(
             dependencies: [
                 .product(name: "Vapor", package: "vapor"),
                 .product(name: "SwiftJS", package: "SwiftJS"),
-            ]
-        ),
-        .target(
-            name: "ReactSampleServer",
-            dependencies: [
-                .target(name: "ReactController"),
-            ],
-            exclude: [
-                "js",
-                "asserts",
-            ],
-            resources: [
-                .copy("Public"),
-            ],
-            swiftSettings: [
-                .unsafeFlags(["-cross-module-optimization"], .when(configuration: .release))
             ]
         ),
     ]
