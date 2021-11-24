@@ -38,6 +38,8 @@ public class ReactController: RouteCollection {
     
     #endif
     
+    public var preloadedStateHandler: ((Request) -> Json)?
+    
     let context: NIOJSContext
     
     public init(bundle: String, serverScript: URL, root: String = "root") throws {
@@ -78,6 +80,13 @@ extension ReactController {
 extension ReactController {
     
     private func html(_ req: Request) throws -> EventLoopFuture<Response> {
+        
+        var preloadedState: String = ""
+        
+        if let preloadedStateHandler = self.preloadedStateHandler {
+            let state = preloadedStateHandler(req).json() ?? "{}"
+            preloadedState = "<script>window.__PRELOADED_STATE__ = \(state)</script>"
+        }
         
         if serverSideRenderEnabled {
             
@@ -139,6 +148,7 @@ extension ReactController {
                         </head>
                         <body>
                             <div id="\(self.root)">\(html)</div>
+                            \(preloadedState)
                             <script src="\(self.bundle)"></script>
                         </body>
                     </html>
@@ -174,6 +184,7 @@ extension ReactController {
                     </head>
                     <body>
                         <div id="\(self.root)"></div>
+                        \(preloadedState)
                         <script src="\(self.bundle)"></script>
                     </body>
                 </html>
