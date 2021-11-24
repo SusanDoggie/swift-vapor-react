@@ -38,7 +38,7 @@ public class ReactController: RouteCollection {
     
     #endif
     
-    public var preloadedStateHandler: ((Request) -> Json)?
+    public var preloadedStateHandler: ((Request) -> EventLoopFuture<Json>)?
     
     let context: NIOJSContext
     
@@ -79,9 +79,11 @@ extension ReactController {
 
 extension ReactController {
     
-    private func html(_ req: Request) throws -> EventLoopFuture<Response> {
-        
-        var _preloadedState = self.preloadedStateHandler?(req)
+    private func html(_ req: Request) -> EventLoopFuture<Response> {
+        return self.preloadedStateHandler?(req).flatMap { self.html(req, $0) } ?? self.html(req, nil)
+    }
+    
+    private func html(_ req: Request, _ preloadedState: Json?) -> EventLoopFuture<Response> {
         
         if serverSideRenderEnabled {
             
@@ -92,7 +94,7 @@ extension ReactController {
                 if let fragment = req.url.fragment { location["hash"] = "#\(fragment)" }
                 
                 var arguments = [location]
-                if let state = _preloadedState {
+                if let state = preloadedState {
                     arguments.append(state)
                 }
                 
@@ -109,8 +111,14 @@ extension ReactController {
                 let html = result["html"].stringValue ?? ""
                 let css = result["css"].stringValue ?? ""
                 
+                var preloadedState = preloadedState
+                var _preloadedState: String = ""
+                
                 if result.hasProperty("preloadedState") {
-                    _preloadedState = result["preloadedState"].toJson()
+                    preloadedState = result["preloadedState"].toJson()
+                }
+                if let state = preloadedState {
+                    _preloadedState = "<script>window.__PRELOADED_STATE__ = \(state.json() ?? "{}")</script>"
                 }
                 
                 let statusCode = result["statusCode"].doubleValue.flatMap(Int.init(exactly:)) ?? 200
@@ -123,11 +131,6 @@ extension ReactController {
                 for (name, content) in meta {
                     guard let content = content.stringValue else { continue }
                     meta_string.append("<meta name=\"\(name)\" content=\"\(content)\">")
-                }
-                
-                var preloadedState: String = ""
-                if let state = _preloadedState {
-                    preloadedState = "<script>window.__PRELOADED_STATE__ = \(state.json() ?? "{}")</script>"
                 }
                 
                 var headers = HTTPHeaders()
@@ -157,7 +160,7 @@ extension ReactController {
                         </head>
                         <body>
                             <div id="\(self.root)">\(html)</div>
-                            \(preloadedState)
+                            \(_preloadedState)
                             <script src="\(self.bundle)"></script>
                         </body>
                     </html>
@@ -168,9 +171,9 @@ extension ReactController {
             
         } else {
             
-            var preloadedState: String = ""
-            if let state = _preloadedState {
-                preloadedState = "<script>window.__PRELOADED_STATE__ = \(state.json() ?? "{}")</script>"
+            var _preloadedState: String = ""
+            if let state = preloadedState {
+                _preloadedState = "<script>window.__PRELOADED_STATE__ = \(state.json() ?? "{}")</script>"
             }
             
             var headers = HTTPHeaders()
@@ -198,7 +201,7 @@ extension ReactController {
                     </head>
                     <body>
                         <div id="\(self.root)"></div>
-                        \(preloadedState)
+                        \(_preloadedState)
                         <script src="\(self.bundle)"></script>
                     </body>
                 </html>
