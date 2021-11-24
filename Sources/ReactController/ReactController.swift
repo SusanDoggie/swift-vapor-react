@@ -81,12 +81,7 @@ extension ReactController {
     
     private func html(_ req: Request) throws -> EventLoopFuture<Response> {
         
-        var preloadedState: String = ""
-        
-        if let preloadedStateHandler = self.preloadedStateHandler {
-            let state = preloadedStateHandler(req).json() ?? "{}"
-            preloadedState = "<script>window.__PRELOADED_STATE__ = \(state)</script>"
-        }
+        var _preloadedState = self.preloadedStateHandler?(req)
         
         if serverSideRenderEnabled {
             
@@ -96,7 +91,12 @@ extension ReactController {
                 if let query = req.url.query { location["search"] = "?\(query)" }
                 if let fragment = req.url.fragment { location["hash"] = "#\(fragment)" }
                 
-                let result = context.global["render"].call(withArguments: [JSObject(json: location, in: context)])
+                var arguments = [location]
+                if let state = _preloadedState {
+                    arguments.append(state)
+                }
+                
+                let result = context.global["render"].call(withArguments: arguments.map { JSObject(json: $0, in: context) })
                 
                 if let exception = context.exception {
                     throw Abort(.internalServerError, reason: exception["message"].stringValue)
@@ -109,6 +109,10 @@ extension ReactController {
                 let html = result["html"].stringValue ?? ""
                 let css = result["css"].stringValue ?? ""
                 
+                if result.hasProperty("preloadedState") {
+                    _preloadedState = result["preloadedState"].toJson()
+                }
+                
                 let statusCode = result["statusCode"].doubleValue.flatMap(Int.init(exactly:)) ?? 200
                 let meta = result["meta"].dictionary ?? [:]
                 
@@ -119,6 +123,11 @@ extension ReactController {
                 for (name, content) in meta {
                     guard let content = content.stringValue else { continue }
                     meta_string.append("<meta name=\"\(name)\" content=\"\(content)\">")
+                }
+                
+                var preloadedState: String = ""
+                if let state = _preloadedState {
+                    preloadedState = "<script>window.__PRELOADED_STATE__ = \(state.json() ?? "{}")</script>"
                 }
                 
                 var headers = HTTPHeaders()
@@ -158,6 +167,11 @@ extension ReactController {
             }
             
         } else {
+            
+            var preloadedState: String = ""
+            if let state = _preloadedState {
+                preloadedState = "<script>window.__PRELOADED_STATE__ = \(state.json() ?? "{}")</script>"
+            }
             
             var headers = HTTPHeaders()
             headers.contentType = .html
