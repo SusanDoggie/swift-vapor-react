@@ -54,6 +54,14 @@ public class ReactController: RouteCollection {
             try $0.evaluateScript(String(contentsOf: serverScript))
             
             if let exception = $0.exception {
+                
+                #if DEBUG
+                
+                print("Error message:", exception["message"].stringValue ?? "")
+                print("stack:", exception["stack"].stringValue ?? "")
+                
+                #endif
+                
                 throw Error(message: exception["message"].stringValue)
             }
         }
@@ -101,6 +109,14 @@ extension ReactController {
                 let result = context.global["render"].call(withArguments: arguments.map { JSObject(json: $0, in: context) })
                 
                 if let exception = context.exception {
+                    
+                    #if DEBUG
+                    
+                    print("Error message:", exception["message"].stringValue ?? "")
+                    print("stack:", exception["stack"].stringValue ?? "")
+                    
+                    #endif
+                    
                     throw Abort(.internalServerError, reason: exception["message"].stringValue)
                 }
                 
