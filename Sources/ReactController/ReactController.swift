@@ -51,8 +51,6 @@ public class ReactController: RouteCollection {
         
         try self.context.run {
             
-            $0.global["self"] = $0.global
-            
             try $0.evaluateScript(String(contentsOf: serverScript))
             
             if let exception = $0.exception {

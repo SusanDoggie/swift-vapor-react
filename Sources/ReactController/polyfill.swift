@@ -1,5 +1,5 @@
 //
-//  NIOJSContext.swift
+//  polyfill.swift
 //
 //  The MIT License
 //  Copyright (c) 2015 - 2021 Susan Cheng. All rights reserved.
@@ -23,47 +23,11 @@
 //  THE SOFTWARE.
 //
 
-public class NIOJSContext {
+extension JSContext {
     
-    private let context: JSContext
-    
-    public let threadPool: NIOThreadPool = NIOThreadPool(numberOfThreads: 1)
-    
-    public init() {
-        self.context = JSContext()
-        self.context.polyfill()
-    }
-    
-    public init(context: JSContext) {
-        self.context = context
-    }
-}
-
-extension NIOJSContext {
-    
-    public func start() {
-        self.threadPool.start()
-    }
-    
-    public func shutdownGracefully(_ callback: @escaping (Error?) -> Void) {
-        self.threadPool.shutdownGracefully(callback)
-    }
-    
-    public func syncShutdownGracefully() throws {
-        try self.threadPool.syncShutdownGracefully()
-    }
-}
-
-extension NIOJSContext {
-    
-    public func run<T>(callback: @escaping (JSContext) throws -> T) rethrows -> T {
-        return try callback(self.context)
-    }
-    
-    public func run<T>(eventLoop: EventLoop, callback: @escaping (JSContext) throws -> T) -> EventLoopFuture<T> {
+    func polyfill() {
         
-        return self.threadPool.runIfActive(eventLoop: eventLoop) {
-            try callback(self.context)
-        }
+        global["self"] = global
+        
     }
 }
