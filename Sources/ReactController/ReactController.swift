@@ -108,7 +108,7 @@ extension ReactController {
                     arguments.append(state)
                 }
                 
-                let result = context.global["render"].call(withArguments: arguments.map { JSObject(json: $0, in: context) })
+                let result = context.global["render"].call(withArguments: arguments)
                 
                 if let exception = context.exception {
                     
