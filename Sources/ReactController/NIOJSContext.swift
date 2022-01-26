@@ -29,9 +29,11 @@ public class NIOJSContext {
     
     public let threadPool: NIOThreadPool = NIOThreadPool(numberOfThreads: 1)
     
+    public var logger: (() -> Logger?)?
+    
     public init() {
         self.context = JSContext()
-        self.context.polyfill()
+        self.context.polyfill(self)
     }
     
     public init(context: JSContext) {

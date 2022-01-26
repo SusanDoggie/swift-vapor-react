@@ -38,9 +38,9 @@ public class ReactController: RouteCollection {
     
     #endif
     
-    public var useFinalState: Bool = true
-    
     public var preloadedStateHandler: ((Request) -> EventLoopFuture<Json>)?
+    
+    public var logger: Logger?
     
     let context: NIOJSContext
     
@@ -49,6 +49,7 @@ public class ReactController: RouteCollection {
         self.root = root
         self.context = NIOJSContext()
         
+        self.context.logger = { [weak self] in self?.logger }
         self.context.start()
         
         try self.context.run {
@@ -132,7 +133,7 @@ extension ReactController {
                 var preloadedState = preloadedState
                 var _preloadedState: String = ""
                 
-                if self.useFinalState && result.hasProperty("preloadedState") {
+                if result.hasProperty("preloadedState") {
                     preloadedState = result["preloadedState"].toJson()
                 }
                 if let state = preloadedState {
