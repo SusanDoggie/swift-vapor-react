@@ -151,6 +151,7 @@ extension ReactController {
                 
                 var headers = HTTPHeaders()
                 headers.contentType = .html
+                headers.cacheControl = .init(noCache: true)
                 
                 let body = Response.Body(string: """
                     <!doctype html>
@@ -194,6 +195,7 @@ extension ReactController {
             
             var headers = HTTPHeaders()
             headers.contentType = .html
+            headers.cacheControl = .init(noCache: true)
             
             let body = Response.Body(string: """
                 <!doctype html>
