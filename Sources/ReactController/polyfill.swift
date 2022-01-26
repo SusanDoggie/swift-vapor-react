@@ -33,31 +33,31 @@ extension JSContext {
         
         console["debug"] = JSObject(newFunctionIn: self) { [weak context] _context, this, args in
             let logger = context?.logger?()
-            logger?.debug("\(args.map { "\($0)" }.joined(separator: " "))")
+            logger?.debug("\(args.map { $0.stringValue ?? "\($0)" }.joined(separator: " "))")
             return JSObject(undefinedIn: _context)
         }
         
         console["info"] = JSObject(newFunctionIn: self) { [weak context] _context, this, args in
             let logger = context?.logger?()
-            logger?.info("\(args.map { "\($0)" }.joined(separator: " "))")
+            logger?.info("\(args.map { $0.stringValue ?? "\($0)" }.joined(separator: " "))")
             return JSObject(undefinedIn: _context)
         }
         
         console["log"] = JSObject(newFunctionIn: self) { [weak context] _context, this, args in
             let logger = context?.logger?()
-            logger?.notice("\(args.map { "\($0)" }.joined(separator: " "))")
+            logger?.notice("\(args.map { $0.stringValue ?? "\($0)" }.joined(separator: " "))")
             return JSObject(undefinedIn: _context)
         }
         
         console["warn"] = JSObject(newFunctionIn: self) { [weak context] _context, this, args in
             let logger = context?.logger?()
-            logger?.warning("\(args.map { "\($0)" }.joined(separator: " "))")
+            logger?.warning("\(args.map { $0.stringValue ?? "\($0)" }.joined(separator: " "))")
             return JSObject(undefinedIn: _context)
         }
         
         console["error"] = JSObject(newFunctionIn: self) { [weak context] _context, this, args in
             let logger = context?.logger?()
-            logger?.error("\(args.map { "\($0)" }.joined(separator: " "))")
+            logger?.error("\(args.map { $0.stringValue ?? "\($0)" }.joined(separator: " "))")
             return JSObject(undefinedIn: _context)
         }
         
