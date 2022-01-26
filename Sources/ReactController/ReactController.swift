@@ -38,6 +38,8 @@ public class ReactController: RouteCollection {
     
     #endif
     
+    public var useFinalState: Bool = true
+    
     public var preloadedStateHandler: ((Request) -> EventLoopFuture<Json>)?
     
     let context: NIOJSContext
@@ -130,7 +132,7 @@ extension ReactController {
                 var preloadedState = preloadedState
                 var _preloadedState: String = ""
                 
-                if result.hasProperty("preloadedState") {
+                if self.useFinalState && result.hasProperty("preloadedState") {
                     preloadedState = result["preloadedState"].toJson()
                 }
                 if let state = preloadedState {
