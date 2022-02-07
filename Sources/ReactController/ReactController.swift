@@ -167,6 +167,7 @@ extension ReactController {
                                 html,
                                 body {
                                     height: 100%;
+                                    height: 100vh;
                                 }
                                 body {
                                     overflow: hidden;
@@ -210,6 +211,7 @@ extension ReactController {
                             html,
                             body {
                                 height: 100%;
+                                height: 100vh;
                             }
                             body {
                                 overflow: hidden;
