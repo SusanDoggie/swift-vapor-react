@@ -161,13 +161,12 @@ extension ReactController {
                     <html>
                         <head>
                             <meta charset="utf-8">
-                            <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
+                            <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
                             \(meta_string.joined(separator: "\n"))
                             <style>
                                 html,
                                 body {
                                     height: 100%;
-                                    height: 100vh;
                                 }
                                 body {
                                     overflow: hidden;
@@ -206,12 +205,11 @@ extension ReactController {
                 <html>
                     <head>
                         <meta charset="utf-8">
-                        <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
+                        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
                         <style>
                             html,
                             body {
                                 height: 100%;
-                                height: 100vh;
                             }
                             body {
                                 overflow: hidden;
