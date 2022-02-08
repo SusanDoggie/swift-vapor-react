@@ -106,14 +106,17 @@ extension ReactController {
                 \(meta.joined(separator: "\n"))
                 <style>
                     html, body {
+                        width: 100%;
                         height: 100%;
                     }
                     #\(self.root) {
                         display: flex;
+                        width: 100%;
                         height: 100%;
                     }
                     @media (orientation: landscape) {
                         html, body {
+                            width: 100vw;
                             height: 100vh;
                         }
                         #\(self.root) {
