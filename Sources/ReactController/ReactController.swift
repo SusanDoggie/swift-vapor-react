@@ -90,6 +90,44 @@ extension ReactController {
 
 extension ReactController {
     
+    private func html_template(
+        _ meta: [String],
+        _ css: String,
+        _ html: String,
+        _ preloadedState: String
+    ) -> String {
+        
+        return """
+        <!doctype html>
+        <html>
+            <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
+                \(meta.joined(separator: "\n"))
+                <style>
+                    html, body {
+                        height: 100vh;
+                    }
+                    #\(self.root) {
+                        display: flex;
+                        position: fixed;
+                        height: 100%;
+                    }
+                </style>
+                \(css)
+            </head>
+            <body>
+                <div id="\(self.root)">\(html)</div>
+                \(preloadedState)
+                <script src="\(self.bundle)"></script>
+            </body>
+        </html>
+        """
+    }
+}
+
+extension ReactController {
+    
     private func html(_ req: Request) -> EventLoopFuture<Response> {
         return self.preloadedStateHandler?(req).flatMap { self.html(req, $0) } ?? self.html(req, nil)
     }
@@ -156,35 +194,7 @@ extension ReactController {
                 headers.contentType = .html
                 headers.cacheControl = .init(noCache: true)
                 
-                let body = Response.Body(string: """
-                    <!doctype html>
-                    <html>
-                        <head>
-                            <meta charset="utf-8">
-                            <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
-                            \(meta_string.joined(separator: "\n"))
-                            <style>
-                                html,
-                                body {
-                                    height: 100%;
-                                }
-                                body {
-                                    overflow: hidden;
-                                }
-                                #\(self.root) {
-                                    display: flex;
-                                    height: 100%;
-                                }
-                            </style>
-                            \(css)
-                        </head>
-                        <body>
-                            <div id="\(self.root)">\(html)</div>
-                            \(_preloadedState)
-                            <script src="\(self.bundle)"></script>
-                        </body>
-                    </html>
-                    """)
+                let body = Response.Body(string: self.html_template(meta_string, css, html, _preloadedState))
                 
                 return Response(status: .init(statusCode: statusCode), headers: headers, body: body)
             }
@@ -200,33 +210,7 @@ extension ReactController {
             headers.contentType = .html
             headers.cacheControl = .init(noCache: true)
             
-            let body = Response.Body(string: """
-                <!doctype html>
-                <html>
-                    <head>
-                        <meta charset="utf-8">
-                        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
-                        <style>
-                            html,
-                            body {
-                                height: 100%;
-                            }
-                            body {
-                                overflow: hidden;
-                            }
-                            #\(self.root) {
-                                display: flex;
-                                height: 100%;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div id="\(self.root)"></div>
-                        \(_preloadedState)
-                        <script src="\(self.bundle)"></script>
-                    </body>
-                </html>
-                """)
+            let body = Response.Body(string: self.html_template([], "", "", _preloadedState))
             
             return req.eventLoop.makeSucceededFuture(Response(status: .ok, headers: headers, body: body))
         }
