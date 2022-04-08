@@ -185,10 +185,7 @@ extension ReactController {
                 return req.eventLoop.makeSucceededFuture(template)
             }
             
-            var template = template
-            template.preloadedState = next
-            
-            return self._template(req, template, handler)
+            return self._template(req, next)
         }
     }
     
