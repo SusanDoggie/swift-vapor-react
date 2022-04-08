@@ -40,7 +40,7 @@ public class ReactController: RouteCollection {
     
     public var preloadedStateHandler: ((Request) -> EventLoopFuture<Json>)?
     
-    public var preloadedStateUpdateHandler: ((Request, Json?) -> EventLoopFuture<Json?>)?
+    public var preloadedStateUpdateHandler: ((Request, Json) -> EventLoopFuture<Json?>)?
     
     public var logger: Logger?
     
@@ -108,15 +108,6 @@ extension ReactController {
     }
 }
 
-extension ReactController.Template {
-    
-    func withPreloadedState(_ state: Json?) -> ReactController.Template {
-        var copy = self
-        copy.preloadedState = state
-        return copy
-    }
-}
-
 extension ReactController {
     
     private func html_template(
@@ -171,11 +162,34 @@ extension ReactController {
         
         let template = self.preloadedStateHandler?(req).flatMap { self._template(req, $0) } ?? self._template(req, nil)
         
-        return self.preloadedStateUpdateHandler.map { handler in
-            template.flatMap { template in
-                handler(req, template.preloadedState).map { template.withPreloadedState($0) }
+        if let handler = self.preloadedStateUpdateHandler {
+            return template.flatMap { self._template(req, $0, handler) }
+        }
+        
+        return template
+    }
+    
+    private func _template(
+        _ req: Request,
+        _ template: Template,
+        _ handler: @escaping (Request, Json) -> EventLoopFuture<Json?>
+    ) -> EventLoopFuture<Template> {
+        
+        guard let state = template.preloadedState else {
+            return req.eventLoop.makeSucceededFuture(template)
+        }
+        
+        return handler(req, state).flatMap { next in
+            
+            guard let next = next else {
+                return req.eventLoop.makeSucceededFuture(template)
             }
-        } ?? template
+            
+            var template = template
+            template.preloadedState = next
+            
+            return self._template(req, template, handler)
+        }
     }
     
     private func _template(_ req: Request, _ preloadedState: Json?) -> EventLoopFuture<Template> {
