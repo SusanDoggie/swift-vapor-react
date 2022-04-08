@@ -40,6 +40,8 @@ public class ReactController: RouteCollection {
     
     public var preloadedStateHandler: ((Request) -> EventLoopFuture<Json>)?
     
+    public var preloadedStateUpdateHandler: ((Request, Json?) -> EventLoopFuture<Json?>)?
+    
     public var logger: Logger?
     
     let context: NIOJSContext
@@ -85,6 +87,33 @@ extension ReactController {
     public struct Error: Swift.Error {
         
         public var message: String?
+    }
+}
+
+extension ReactController {
+    
+    struct Template {
+        
+        var statusCode: Int?
+        
+        var url: String?
+        
+        var meta: [String] = []
+        
+        var css: String = ""
+        
+        var html: String = ""
+        
+        var preloadedState: Json?
+    }
+}
+
+extension ReactController.Template {
+    
+    func withPreloadedState(_ state: Json?) -> ReactController.Template {
+        var copy = self
+        copy.preloadedState = state
+        return copy
     }
 }
 
@@ -138,11 +167,18 @@ extension ReactController {
 
 extension ReactController {
     
-    private func html(_ req: Request) -> EventLoopFuture<Response> {
-        return self.preloadedStateHandler?(req).flatMap { self.html(req, $0) } ?? self.html(req, nil)
+    private func _template(_ req: Request) -> EventLoopFuture<Template> {
+        
+        let template = self.preloadedStateHandler?(req).flatMap { self._template(req, $0) } ?? self._template(req, nil)
+        
+        return self.preloadedStateUpdateHandler.map { handler in
+            template.flatMap { template in
+                handler(req, template.preloadedState).map { template.withPreloadedState($0) }
+            }
+        } ?? template
     }
     
-    private func html(_ req: Request, _ preloadedState: Json?) -> EventLoopFuture<Response> {
+    private func _template(_ req: Request, _ preloadedState: Json?) -> EventLoopFuture<Template> {
         
         if serverSideRenderEnabled {
             
@@ -171,24 +207,12 @@ extension ReactController {
                     throw Abort(.internalServerError, reason: exception["message"].stringValue)
                 }
                 
-                if let url = result["url"].stringValue {
-                    return req.redirect(to: url)
-                }
-                
-                let html = result["html"].stringValue ?? ""
-                let css = result["css"].stringValue ?? ""
-                
                 var preloadedState = preloadedState
-                var _preloadedState: String = ""
                 
                 if result.hasProperty("preloadedState") {
                     preloadedState = result["preloadedState"].toJson()
                 }
-                if let state = preloadedState {
-                    _preloadedState = "<script>window.__PRELOADED_STATE__ = \(state.json() ?? "{}")</script>"
-                }
                 
-                let statusCode = result["statusCode"].doubleValue.flatMap(Int.init(exactly:)) ?? 200
                 let meta = result["meta"].dictionary ?? [:]
                 
                 var meta_string: [String] = []
@@ -200,29 +224,62 @@ extension ReactController {
                     meta_string.append("<meta name=\"\(name)\" content=\"\(content)\">")
                 }
                 
-                var headers = HTTPHeaders()
-                headers.contentType = .html
-                headers.cacheControl = .init(noCache: true)
-                
-                let body = Response.Body(string: self.html_template(meta_string, css, html, _preloadedState))
-                
-                return Response(status: .init(statusCode: statusCode), headers: headers, body: body)
+                return Template(
+                    statusCode: result["statusCode"].doubleValue.flatMap(Int.init(exactly:)),
+                    url: result["url"].stringValue,
+                    meta: meta_string,
+                    css: result["css"].stringValue ?? "",
+                    html: result["html"].stringValue ?? "",
+                    preloadedState: preloadedState
+                )
             }
             
         } else {
             
-            var _preloadedState: String = ""
-            if let state = preloadedState {
-                _preloadedState = "<script>window.__PRELOADED_STATE__ = \(state.json() ?? "{}")</script>"
-            }
-            
-            var headers = HTTPHeaders()
-            headers.contentType = .html
-            headers.cacheControl = .init(noCache: true)
-            
-            let body = Response.Body(string: self.html_template([], "", "", _preloadedState))
-            
-            return req.eventLoop.makeSucceededFuture(Response(status: .ok, headers: headers, body: body))
+            return req.eventLoop.makeSucceededFuture(Template(preloadedState: preloadedState))
         }
     }
+    
+    private func html(_ req: Request) -> EventLoopFuture<Response> {
+        
+        return self._template(req).map { template in
+            
+            if self.serverSideRenderEnabled {
+                
+                if let url = template.url {
+                    return req.redirect(to: url)
+                }
+                
+                var _preloadedState: String = ""
+                
+                if let state = template.preloadedState {
+                    _preloadedState = "<script>window.__PRELOADED_STATE__ = \(state.json() ?? "{}")</script>"
+                }
+                
+                var headers = HTTPHeaders()
+                headers.contentType = .html
+                headers.cacheControl = .init(noCache: true)
+                
+                let body = Response.Body(string: self.html_template(template.meta, template.css, template.html, _preloadedState))
+                
+                return Response(status: .init(statusCode: template.statusCode ?? 200), headers: headers, body: body)
+                
+            } else {
+                
+                var _preloadedState: String = ""
+                if let state = template.preloadedState {
+                    _preloadedState = "<script>window.__PRELOADED_STATE__ = \(state.json() ?? "{}")</script>"
+                }
+                
+                var headers = HTTPHeaders()
+                headers.contentType = .html
+                headers.cacheControl = .init(noCache: true)
+                
+                let body = Response.Body(string: self.html_template([], "", "", _preloadedState))
+                
+                return Response(status: .ok, headers: headers, body: body)
+            }
+        }
+    }
+    
 }
