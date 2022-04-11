@@ -23,6 +23,24 @@
 //  THE SOFTWARE.
 //
 
+extension JSContext {
+    
+    func check_exception() throws {
+        
+        if let exception = self.exception {
+            
+            #if DEBUG
+            
+            print("Error message:", exception["message"].stringValue ?? "")
+            print("stack:", exception["stack"].stringValue ?? "")
+            
+            #endif
+            
+            throw ReactController.Error(message: exception["message"].stringValue)
+        }
+    }
+}
+
 public class ReactController: RouteCollection {
     
     public var root: String
@@ -45,6 +63,8 @@ public class ReactController: RouteCollection {
     public var logger: Logger?
     
     let context: NIOJSContext
+    var render: JSObject!
+    var minify: JSObject!
     
     public init(bundle: String, serverScript: URL, root: String = "root") throws {
         self.bundle = bundle
@@ -54,21 +74,13 @@ public class ReactController: RouteCollection {
         self.context.logger = { [weak self] in self?.logger }
         self.context.start()
         
-        try self.context.run {
+        try self.context.run { context in
             
-            try $0.evaluateScript(String(contentsOf: serverScript))
+            try context.evaluateScript(String(contentsOf: serverScript))
+            try context.check_exception()
             
-            if let exception = $0.exception {
-                
-                #if DEBUG
-                
-                print("Error message:", exception["message"].stringValue ?? "")
-                print("stack:", exception["stack"].stringValue ?? "")
-                
-                #endif
-                
-                throw Error(message: exception["message"].stringValue)
-            }
+            self.render = context.global["render"]
+            self.minify = context.minify()
         }
     }
     
@@ -105,6 +117,8 @@ extension ReactController {
         var html: String = ""
         
         var preloadedState: Json?
+        
+        var minified: String?
     }
 }
 
@@ -204,19 +218,8 @@ extension ReactController {
                     arguments.append(state)
                 }
                 
-                let result = context.global["render"].call(withArguments: arguments)
-                
-                if let exception = context.exception {
-                    
-                    #if DEBUG
-                    
-                    print("Error message:", exception["message"].stringValue ?? "")
-                    print("stack:", exception["stack"].stringValue ?? "")
-                    
-                    #endif
-                    
-                    throw Abort(.internalServerError, reason: exception["message"].stringValue)
-                }
+                let result = self.render.call(withArguments: arguments)
+                try context.check_exception()
                 
                 var preloadedState = preloadedState
                 
@@ -235,13 +238,17 @@ extension ReactController {
                     meta_string.append("<meta name=\"\(name)\" content=\"\(content)\">")
                 }
                 
+                let compressed = self.minify.call(withArguments: ["window.__PRELOADED_STATE__ = \(preloadedState?.json() ?? "{}")"])
+                try self.minify.context.check_exception()
+                
                 return Template(
                     statusCode: result["statusCode"].doubleValue.flatMap(Int.init(exactly:)),
                     url: result["url"].stringValue,
                     meta: meta_string,
                     css: result["css"].stringValue ?? "",
                     html: result["html"].stringValue ?? "",
-                    preloadedState: preloadedState
+                    preloadedState: preloadedState,
+                    minified: compressed.stringValue
                 )
             }
             
@@ -253,7 +260,7 @@ extension ReactController {
     
     private func html(_ req: Request) -> EventLoopFuture<Response> {
         
-        return self._template(req).map { template in
+        return self._template(req).flatMapThrowing { template in
             
             if self.serverSideRenderEnabled {
                 
@@ -263,8 +270,8 @@ extension ReactController {
                 
                 var _preloadedState: String = ""
                 
-                if let state = template.preloadedState {
-                    _preloadedState = "<script>window.__PRELOADED_STATE__ = \(state.json() ?? "{}")</script>"
+                if let state = template.minified {
+                    _preloadedState = "<script>\(state)</script>"
                 }
                 
                 var headers = HTTPHeaders()
@@ -278,8 +285,8 @@ extension ReactController {
             } else {
                 
                 var _preloadedState: String = ""
-                if let state = template.preloadedState {
-                    _preloadedState = "<script>window.__PRELOADED_STATE__ = \(state.json() ?? "{}")</script>"
+                if let state = template.minified {
+                    _preloadedState = "<script>\(state)</script>"
                 }
                 
                 var headers = HTTPHeaders()
