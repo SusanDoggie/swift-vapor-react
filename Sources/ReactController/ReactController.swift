@@ -262,16 +262,18 @@ extension ReactController {
         
         return self._template(req).flatMapThrowing { template in
             
+            var _preloadedState: String = ""
+            
+            if let state = template.minified {
+                _preloadedState = "<script>\(state)</script>"
+            } else if let state = template.preloadedState {
+                _preloadedState = "<script>window.__PRELOADED_STATE__ = \(state.json() ?? "{}")</script>"
+            }
+            
             if self.serverSideRenderEnabled {
                 
                 if let url = template.url {
                     return req.redirect(to: url)
-                }
-                
-                var _preloadedState: String = ""
-                
-                if let state = template.minified {
-                    _preloadedState = "<script>\(state)</script>"
                 }
                 
                 var headers = HTTPHeaders()
@@ -283,11 +285,6 @@ extension ReactController {
                 return Response(status: .init(statusCode: template.statusCode ?? 200), headers: headers, body: body)
                 
             } else {
-                
-                var _preloadedState: String = ""
-                if let state = template.minified {
-                    _preloadedState = "<script>\(state)</script>"
-                }
                 
                 var headers = HTTPHeaders()
                 headers.contentType = .html
