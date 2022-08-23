@@ -60,6 +60,8 @@ public class ReactController: RouteCollection {
     
     public var preloadedStateUpdateHandler: ((Request, Json) -> EventLoopFuture<Json?>)?
     
+    public var externalCSSUrls: [String] = []
+    
     public var logger: Logger?
     
     let context: NIOJSContext
@@ -158,6 +160,7 @@ extension ReactController {
                         }
                     }
                 </style>
+                \(externalCSSUrls.map { "<link rel=\"stylesheet\" href=\"\($0)\" />" }.joined(separator: "\n"))
                 \(css)
             </head>
             <body>
