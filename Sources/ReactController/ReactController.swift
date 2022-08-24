@@ -140,26 +140,6 @@ extension ReactController {
                 <meta charset="utf-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
                 \(meta.joined(separator: "\n"))
-                <style>
-                    html, body {
-                        width: 100%;
-                        height: 100%;
-                    }
-                    #\(self.root) {
-                        display: flex;
-                        width: 100%;
-                        height: 100%;
-                    }
-                    @media (orientation: landscape) {
-                        html, body {
-                            width: 100vw;
-                            height: 100vh;
-                        }
-                        #\(self.root) {
-                            position: fixed;
-                        }
-                    }
-                </style>
                 \(externalCSSUrls.map { "<link rel=\"stylesheet\" href=\"\($0)\" />" }.joined(separator: "\n"))
                 \(css)
             </head>
